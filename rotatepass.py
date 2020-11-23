@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2020 Ahmed Nazmy.
-# This file is part of passrotate
+# This file is part of rotatepass
 # (see https://github.com/anazmy/rotatepass).
 
 # This program is free software: you can redistribute it and/or modify
