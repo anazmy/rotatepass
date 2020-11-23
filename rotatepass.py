@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright (c) 2020 Ahmed Nazmy.
-# This file is part of passrotate 
+# This file is part of passrotate
 # (see https://github.com/anazmy/rotatepass).
 
 # This program is free software: you can redistribute it and/or modify
@@ -43,7 +43,7 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.exceptions import AlreadyFinalized, UnsupportedAlgorithm, InvalidTag
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import uuid
 
 
@@ -67,7 +67,7 @@ user = "root"
 # User to be used for ssh, should have sudo access to reset passwords, valid values are,
 # - "None", no sudo user, ssh as root to target hosts.
 # - <username>, use provided username to ssh to target hosts, user should have sudo privs
-sudo_user = "sysadmin"
+sudo_user = "passadmin"
 
 # Boolean, whether sudo needs a passwod or not, valid values are True or False.
 # Value "True" is valid only when sudo_user is set to something else other than None
@@ -443,17 +443,16 @@ def encrypt_file(dict, password):
         kdf = PBKDF2HMAC(salt=salt, length=32, iterations=100000,
                          algorithm=hashes.SHA512, backend=default_backend())
         key = kdf.derive(password_bytes)
-        cipher = AESGCM(key)
-
         nonce = os.urandom(12)
-        ciphertext = cipher.encrypt(nonce, plain_text_bytes, None)
-        token = salt + nonce + ciphertext
+        encryptor = Cipher(algorithms.AES(key), modes.GCM(nonce),
+                           backend=default_backend()).encryptor()
+
+        ciphertext = encryptor.update(plain_text_bytes) + encryptor.finalize()
+        token = salt + nonce + encryptor.tag + ciphertext
 
         # Write to file
         with open(hosts_file, 'wb') as output_file:
             output_file.write(token)
-
-        os.chmod(hosts_file, 0o600)
 
     except (UnsupportedAlgorithm, AlreadyFinalized, InvalidTag):
         sys.stderr.write('\033[31m' + "File encryption failed" + '\033[0m')
@@ -466,15 +465,19 @@ def decrypt_file(filename, password, print_stdout):
 
         salt = cipher_text[:16]
         nonce = cipher_text[16:28]
-        ciphertext = cipher_text[28:]
+        tag = cipher_text[28:44]
+        ciphertext = cipher_text[44:]
 
         kdf = PBKDF2HMAC(salt=salt, length=32, iterations=100000,
                          algorithm=hashes.SHA512, backend=default_backend())
         key = kdf.derive(password_bytes)
-        cipher = AESGCM(key)
+        decryptor = Cipher(
+            algorithms.AES(key),
+            modes.GCM(nonce, tag),
+            backend=default_backend()).decryptor()
 
         try:
-            plaintext = cipher.decrypt(nonce, ciphertext, None)
+            plaintext = decryptor.update(ciphertext) + decryptor.finalize()
         except (UnsupportedAlgorithm, AlreadyFinalized, InvalidTag):
             sys.stderr.write(
                 '\033[31m' + "File decryption failed, verify the password is correct\n" + '\033[0m')
