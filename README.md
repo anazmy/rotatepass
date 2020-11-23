@@ -1,1 +1,1 @@
-# passrotate
+# rotatepass
