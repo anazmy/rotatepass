@@ -1,4 +1,4 @@
-# rotatepass
+`rotatepass` a script to rotate passwords on servers concurently, and to save them
 
 - Starting point, you will need a file that has a list of all hostnames (one per line) and run the script as below:
 ~~~
