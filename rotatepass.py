@@ -167,7 +167,7 @@ def main(argv):
         file_password = getpass.getpass(
             "Enter password of encrypted hosts file: ")
 
-        if (len(file_password) < 3):
+        if (len(file_password) < 8):
             sys.stderr.write('\033[31m' + 'Password to encrypt/decrypt hosts file is too short. Password should be 8 or more chars' +
                              "\n" + '\033[0m')
             exit(1)
