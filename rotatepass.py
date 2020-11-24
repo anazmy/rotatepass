@@ -318,7 +318,7 @@ def threader(serversdict, fork_timeout, forks, sudo_password, helper_script):
                         serversdict[host]['new_pass'] = output['new_pass']
                         serversdict[host]['currnet_pass'] = output['new_pass']
                         serversdict[host]['success'] = True
-                        sys.stdout.write("Successfuly reset %s's password on %s\n" %
+                        sys.stdout.write("Successfully reset %s's password on %s\n" %
                                          (user, host))
                     else:
                         serversdict[host]['out'] = output['out']
